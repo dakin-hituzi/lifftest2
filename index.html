@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プラウド新宿スクエア | LINEミニアプリ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-anim { animation: shake 0.4s ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-900 flex justify-center items-center min-h-screen p-0 sm:p-4 select-none">
+
+  <!-- スマホ外枠モック -->
+  <div class="w-full sm:max-w-md bg-white min-h-screen sm:min-h-[820px] sm:max-h-[820px] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border-0 sm:border-8 sm:border-slate-800">
+    
+    <!-- LINEミニアプリ ヘッダーバー -->
+    <header class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        <h1 class="text-xs font-semibold tracking-wider text-slate-200">プラウド新宿スクエア 会員証</h1>
+      </div>
+      <div class="flex items-center space-x-3 text-xs text-slate-400">
+        <button onclick="resetData()" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300">リセット</button>
+        <span class="cursor-pointer">✕</span>
+      </div>
+    </header>
+
+    <!-- 会員ステータスサマリー -->
+    <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white px-4 py-4 shrink-0 shadow-md">
+      <div class="flex justify-between items-start">
+        <div>
+          <span class="inline-block text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 mb-1">Platinum Member</span>
+          <p class="text-sm font-semibold text-slate-200">ゲスト：<span id="user-nickname" class="text-white font-bold">新宿太郎</span> 様</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] text-slate-400">現在ランキング</p>
+          <div class="flex items-baseline justify-end space-x-1">
+            <span class="text-2xl font-black text-amber-400" id="user-rank">7</span>
+            <span class="text-xs text-slate-400">位 / 142人中</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ポイント & プログレス -->
+      <div class="mt-3 bg-white/5 rounded-xl p-3 border border-white/10">
+        <div class="flex justify-between items-baseline mb-1">
+          <span class="text-xs text-slate-300 font-medium">保有アクティビティpt</span>
+          <div>
+            <span class="text-xl font-extrabold text-white" id="user-points">2,800</span>
+            <span class="text-xs text-slate-400"> pt</span>
+          </div>
+        </div>
+        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+          <div id="rank-progress" class="bg-gradient-to-r from-amber-400 to-yellow-300 h-2 rounded-full transition-all duration-500" style="width: 56%;"></div>
+        </div>
+        <p class="text-[11px] text-amber-200/80 mt-1.5 flex items-center justify-between">
+          <span id="rank-status-msg">👑 10位以内で限定情報を閲覧中</span>
+          <span class="text-[10px] text-slate-400">TOP 5まで あと400pt</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- タブナビゲーション -->
+    <nav class="flex border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600 shrink-0">
+      <button onclick="switchTab('quests')" id="tab-quests" class="flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 transition-colors">
+        クエスト一覧
+      </button>
+      <button onclick="switchTab('ranking')" id="tab-ranking" class="flex-1 py-3 text-center border-b-2 border-transparent hover:text-slate-900 transition-colors">
+        ランキング
+      </button>
+      <button onclick="switchTab('vip')" id="tab-vip" class="flex-1 py-3 text-center border-b-2 border-transparent hover:text-slate-900 transition-colors flex items-center justify-center space-x-1">
+        <span>上位限定情報</span>
+        <span id="vip-badge" class="w-2 h-2 rounded-full bg-amber-500"></span>
+      </button>
+    </nav>
+
+    <!-- コンテンツ表示エリア -->
+    <main class="flex-1 overflow-y-auto hide-scrollbar p-4 bg-slate-50 text-slate-800">
+      
+      <!-- 1. クエストタブ -->
+      <div id="content-quests" class="space-y-3">
+        <div class="flex justify-between items-center mb-1">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500">獲得可能クエスト</h2>
+          <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">スタッフ承認制（PIN認証）</span>
+        </div>
+
+        <!-- クエストカード群 -->
+        <div id="quest-list" class="space-y-2.5">
+          <!-- JSで動的レンダリング -->
+        </div>
+
+        <div class="mt-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-center">
+          <p class="text-xs font-medium text-indigo-900">＋ 管理画面からクエストは即時追加可能</p>
+          <p class="text-[10px] text-indigo-600 mt-0.5">「第2期事前登録」「現地構造見学会参加」などを随時配信</p>
+        </div>
+      </div>
+
+      <!-- 2. ランキングタブ -->
+      <div id="content-ranking" class="hidden space-y-3">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 text-xs leading-relaxed">
+          <p class="font-bold flex items-center space-x-1">
+            <span>🏆 上位者特典</span>
+          </p>
+          <ul class="mt-1 space-y-0.5 text-[11px] text-amber-800">
+            <li>• <strong>上位 1〜5位:</strong> 第1期先行案内会 最優先商談枠</li>
+            <li>• <strong>上位 1〜10位:</strong> 未公開ペントハウス間取り＆価格表</li>
+          </ul>
+        </div>
+
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mt-2">リアルタイムランキング（匿名）</h2>
+        <div id="ranking-list" class="space-y-1.5">
+          <!-- JSで動的レンダリング -->
+        </div>
+      </div>
+
+      <!-- 3. 上位限定情報タブ -->
+      <div id="content-vip" class="hidden space-y-3">
+        <div id="vip-content-locked" class="hidden text-center py-10 px-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div class="w-12 h-12 mx-auto bg-slate-100 rounded-full flex items-center justify-center text-xl text-slate-400 mb-3">🔒</div>
+          <h3 class="text-sm font-bold text-slate-800">10位以内限定の非公開情報です</h3>
+          <p class="text-xs text-slate-500 mt-1 leading-relaxed">現在<span id="locked-current-rank" class="font-bold text-red-500">11</span>位です。営業所への再来場やクエスト達成でポイントを獲得してアンロックしてください。</p>
+        </div>
+
+        <div id="vip-content-unlocked" class="space-y-3">
+          <div class="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-3.5 rounded-2xl shadow-sm">
+            <span class="text-[10px] font-bold tracking-wider uppercase bg-black/20 px-2 py-0.5 rounded">Exclusive Access</span>
+            <h3 class="text-sm font-bold mt-1">【未公開】最上階プレミアム住戸 プラン集</h3>
+            <p class="text-[11px] text-amber-100 mt-0.5">現在7位のため、先行閲覧権限が付与されています。</p>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">100㎡超・最上階角部屋</span>
+                <h4 class="text-xs font-bold text-slate-800 mt-1">P-120A type（3LDK + WIC + SIC + Roof Balcony）</h4>
+              </div>
+              <span class="text-xs font-bold text-indigo-600">予定価格：2.4億円台</span>
+            </div>
+            <div class="w-full h-32 bg-slate-100 rounded-lg flex flex-col items-center justify-center border border-dashed border-slate-300 text-slate-400">
+              <span class="text-2xl">📐</span>
+              <span class="text-[11px] mt-1 font-medium">専有面積 124.50㎡ | プレミアム仕様</span>
+            </div>
+            <button class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+              最優先商談枠で来場予約する
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- フッター（営業所チェックインボタン） -->
+    <footer class="p-3 bg-white border-t border-slate-200 shrink-0">
+      <button onclick="openPinModalForCheckIn()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md active:scale-95 transition">
+        <span>🏢</span>
+        <span>営業所来場認証（PIN入力で +1,000 pt）</span>
+      </button>
+    </footer>
+
+    <!-- ==================== PIN入力モーダル ==================== -->
+    <div id="pin-modal" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div id="pin-card" class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl space-y-4 border border-slate-100">
+        
+        <!-- モーダルヘッダー -->
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">スタッフ専用承認</span>
+            <h3 class="text-sm font-bold text-slate-900 mt-1">営業スタッフ用PIN入力</h3>
+          </div>
+          <button onclick="closePinModal()" class="text-slate-400 hover:text-slate-600 p-1 text-base">✕</button>
+        </div>
+
+        <!-- 対象クエスト情報 -->
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+          <p class="text-[11px] text-slate-500 font-medium" id="pin-target-title">クエストタイトル</p>
+          <p class="text-sm font-black text-amber-600 mt-0.5" id="pin-target-points">+1,500 pt</p>
+        </div>
+
+        <!-- 6桁PINインジケーター -->
+        <div class="py-2">
+          <div id="pin-dots" class="flex justify-center space-x-3">
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+            <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
+          </div>
+          <p id="pin-error-msg" class="text-[11px] text-red-500 text-center mt-2 font-medium opacity-0 transition-opacity">
+            PINコードが正しくありません
+          </p>
+        </div>
+
+        <!-- テンキーパッド -->
+        <div class="grid grid-cols-3 gap-2 pt-1 pb-2">
+          <button onclick="appendPin('1')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">1</button>
+          <button onclick="appendPin('2')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">2</button>
+          <button onclick="appendPin('3')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">3</button>
+          <button onclick="appendPin('4')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">4</button>
+          <button onclick="appendPin('5')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">5</button>
+          <button onclick="appendPin('6')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">6</button>
+          <button onclick="appendPin('7')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">7</button>
+          <button onclick="appendPin('8')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">8</button>
+          <button onclick="appendPin('9')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">9</button>
+          <button onclick="clearPin()" class="h-11 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 rounded-xl border border-slate-200 transition">C</button>
+          <button onclick="appendPin('0')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">0</button>
+          <button onclick="backspacePin()" class="h-11 bg-slate-100 hover:bg-slate-200 text-sm font-semibold text-slate-600 rounded-xl border border-slate-200 transition">⌫</button>
+        </div>
+
+        <p class="text-[10px] text-slate-400 text-center">
+          ※ 営業担当スタッフに端末を提示して入力してもらってください
+        </p>
+      </div>
+    </div>
+
+    <!-- 通知トースト -->
+    <div id="toast" class="absolute top-14 left-4 right-4 bg-slate-900/95 text-white p-3 rounded-xl shadow-2xl text-xs flex items-center space-x-2 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50">
+      <span class="text-base" id="toast-icon">🎉</span>
+      <div class="flex-1">
+        <p class="font-bold text-emerald-400" id="toast-title">ポイント獲得！</p>
+        <p class="text-[11px] text-slate-300" id="toast-desc">クエストを達成しました</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const CORRECT_PIN = "012877";
+    let enteredPin = "";
+    let pendingAction = null; // { type: 'quest' | 'checkin', questId?: string, points: number, title: string }
+
+    // 初期モックデータ
+    const state = {
+      user: {
+        id: "usr_mock_01",
+        nickname: "新宿太郎",
+        points: 2800,
+        rank: 7
+      },
+      quests: [
+        { id: "q1", title: "モデルルーム初回来場", points: 1000, category: "来場", completed: true },
+        { id: "q2", title: "事前アンケートへの全問回答", points: 300, category: "アクション", completed: true },
+        { id: "q3", title: "FP個別資金計画セミナー参加", points: 1500, category: "相談", completed: false },
+        { id: "q4", title: "物件コンセプトムービー（3分）視聴", points: 200, category: "動画", completed: false },
+        { id: "q5", title: "2回目再来場（設備・カラーセレクト相談）", points: 1000, category: "来場", completed: false },
+        { id: "q6", title: "公式LINEおすすめ間取りのシェア", points: 150, category: "SNS", completed: false }
+      ],
+      competitors: [
+        { name: "プラウド愛好家", points: 4800 },
+        { name: "西新宿ファミリー", points: 4300 },
+        { name: "シティタワー検討中", points: 3700 },
+        { name: "パーク派からの乗換", points: 3400 },
+        { name: "都庁前勤務", points: 3200 },
+        { name: "Ken_Shinjuku", points: 3000 },
+        { name: "新宿太郎 (あなた)", points: 2800, isSelf: true },
+        { name: "代々木サクラ", points: 2600 },
+        { name: "駅徒歩5分重視", points: 2400 },
+        { name: "資産性重視パパ", points: 2200 },
+        { name: "投資目線 Dr.T", points: 2000 },
+        { name: "南向き希望", points: 1800 }
+      ]
+    };
+
+    function renderQuests() {
+      const container = document.getElementById('quest-list');
+      container.innerHTML = state.quests.map(q => `
+        <div class="bg-white p-3 rounded-xl border ${q.completed ? 'border-slate-200 bg-slate-50/70' : 'border-indigo-100 shadow-sm'} flex items-center justify-between transition">
+          <div class="space-y-1">
+            <div class="flex items-center space-x-1.5">
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${q.completed ? 'bg-slate-200 text-slate-600' : 'bg-indigo-50 text-indigo-600'}">${q.category}</span>
+              <span class="text-xs font-bold text-amber-600">+${q.points.toLocaleString()} pt</span>
+            </div>
+            <p class="text-xs font-bold ${q.completed ? 'text-slate-400 line-through' : 'text-slate-800'}">${q.title}</p>
+          </div>
+          <div>
+            ${q.completed 
+              ? `<span class="text-[11px] font-semibold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">達成済</span>` 
+              : `<button onclick="openPinModalForQuest('${q.id}')" class="text-xs font-bold text-white px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition active:scale-95 flex items-center space-x-1">
+                  <span>達成する</span>
+                </button>`
+            }
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function calculateRanking() {
+      const list = [...state.competitors];
+      const selfItem = list.find(c => c.isSelf);
+      if (selfItem) selfItem.points = state.user.points;
+
+      list.sort((a, b) => b.points - a.points);
+      const myRank = list.findIndex(c => c.isSelf) + 1;
+      state.user.rank = myRank;
+
+      document.getElementById('user-points').innerText = state.user.points.toLocaleString();
+      document.getElementById('user-rank').innerText = myRank;
+
+      const vipUnlocked = myRank <= 10;
+      document.getElementById('vip-content-unlocked').classList.toggle('hidden', !vipUnlocked);
+      document.getElementById('vip-content-locked').classList.toggle('hidden', vipUnlocked);
+      document.getElementById('locked-current-rank').innerText = myRank;
+      document.getElementById('vip-badge').className = vipUnlocked 
+        ? 'w-2 h-2 rounded-full bg-amber-500' 
+        : 'w-2 h-2 rounded-full bg-slate-400';
+
+      const progressPercent = Math.min(100, Math.max(10, (state.user.points / 5000) * 100));
+      document.getElementById('rank-progress').style.width = `${progressPercent}%`;
+
+      const rankingContainer = document.getElementById('ranking-list');
+      rankingContainer.innerHTML = list.map((item, idx) => {
+        const rankNum = idx + 1;
+        const isSelf = item.isSelf;
+        let medal = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : `${rankNum}`;
+        return `
+          <div class="p-2.5 rounded-xl border flex items-center justify-between text-xs transition ${
+            isSelf 
+              ? 'bg-indigo-50 border-indigo-300 font-bold text-indigo-900 shadow-sm' 
+              : 'bg-white border-slate-200 text-slate-700'
+          }">
+            <div class="flex items-center space-x-3">
+              <span class="w-6 text-center font-black ${rankNum <= 3 ? 'text-sm' : 'text-slate-400 text-xs'}">${medal}</span>
+              <span>${item.name}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-extrabold ${isSelf ? 'text-indigo-600' : 'text-slate-800'}">${item.points.toLocaleString()} pt</span>
+              ${rankNum <= 10 ? '<span class="text-[10px] text-amber-500">★VIP</span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ================= PIN認証ロジック =================
+    function openPinModalForQuest(questId) {
+      const q = state.quests.find(item => item.id === questId);
+      if (!q || q.completed) return;
+
+      pendingAction = {
+        type: 'quest',
+        questId: q.id,
+        points: q.points,
+        title: q.title
+      };
+      showPinModal(q.title, `+${q.points.toLocaleString()} pt`);
+    }
+
+    function openPinModalForCheckIn() {
+      pendingAction = {
+        type: 'checkin',
+        points: 1000,
+        title: '営業所受付 来場チェックイン'
+      };
+      showPinModal('営業所受付 来場チェックイン', '+1,000 pt');
+    }
+
+    function showPinModal(title, points) {
+      document.getElementById('pin-target-title').innerText = title;
+      document.getElementById('pin-target-points').innerText = points;
+      clearPin();
+      document.getElementById('pin-modal').classList.remove('hidden');
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').classList.add('hidden');
+      clearPin();
+      pendingAction = null;
+    }
+
+    function appendPin(digit) {
+      if (enteredPin.length >= 6) return;
+      enteredPin += digit;
+      updatePinDots();
+      hidePinError();
+
+      if (enteredPin.length === 6) {
+        verifyPin();
+      }
+    }
+
+    function backspacePin() {
+      if (enteredPin.length > 0) {
+        enteredPin = enteredPin.slice(0, -1);
+        updatePinDots();
+        hidePinError();
+      }
+    }
+
+    function clearPin() {
+      enteredPin = "";
+      updatePinDots();
+      hidePinError();
+    }
+
+    function updatePinDots() {
+      const dots = document.querySelectorAll('.pin-dot');
+      dots.forEach((dot, idx) => {
+        if (idx < enteredPin.length) {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-indigo-600 bg-indigo-600 scale-110 transition-all duration-150';
+        } else {
+          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150';
+        }
+      });
+    }
+
+    function verifyPin() {
+      if (enteredPin === CORRECT_PIN) {
+        // 認証成功の演出（緑色点灯）
+        const dots = document.querySelectorAll('.pin-dot');
+        dots.forEach(d => {
+          d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-emerald-500 bg-emerald-500 scale-110';
+        });
+
+        setTimeout(() => {
+          executePendingAction();
+          closePinModal();
+        }, 300);
+      } else {
+        // 認証失敗の演出（赤色 + シェイク）
+        const dots = document.querySelectorAll('.pin-dot');
+        dots.forEach(d => {
+          d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-red-500 bg-red-500';
+        });
+
+        const card = document.getElementById('pin-card');
+        card.classList.add('shake-anim');
+        showPinError("PINコードが正しくありません");
+
+        setTimeout(() => {
+          card.classList.remove('shake-anim');
+          clearPin();
+        }, 500);
+      }
+    }
+
+    function showPinError(msg) {
+      const err = document.getElementById('pin-error-msg');
+      err.innerText = msg;
+      err.classList.remove('opacity-0');
+    }
+
+    function hidePinError() {
+      const err = document.getElementById('pin-error-msg');
+      err.classList.add('opacity-0');
+    }
+
+    function executePendingAction() {
+      if (!pendingAction) return;
+
+      if (pendingAction.type === 'quest') {
+        const q = state.quests.find(item => item.id === pendingAction.questId);
+        if (q) {
+          q.completed = true;
+          state.user.points += q.points;
+          showToast('✅ スタッフ承認完了！', `${q.title} (+${q.points.toLocaleString()} pt)`);
+        }
+      } else if (pendingAction.type === 'checkin') {
+        state.user.points += pendingAction.points;
+        showToast('🏢 来場認証完了！', `営業所への来場ボーナス (+${pendingAction.points.toLocaleString()} pt)`);
+      }
+
+      renderQuests();
+      calculateRanking();
+    }
+
+    // キーボード操作対応 (PCデモ用)
+    window.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('pin-modal');
+      if (modal.classList.contains('hidden')) return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        appendPin(e.key);
+      } else if (e.key === 'Backspace') {
+        backspacePin();
+      } else if (e.key === 'Escape') {
+        closePinModal();
+      }
+    });
+
+    function showToast(title, desc) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').innerText = title;
+      document.getElementById('toast-desc').innerText = desc;
+      toast.classList.remove('opacity-0', '-translate-y-20');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-20');
+      }, 2500);
+    }
+
+    function switchTab(tab) {
+      ['quests', 'ranking', 'vip'].forEach(t => {
+        document.getElementById(`content-${t}`).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.className = 'flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 font-bold transition-colors';
+        } else {
+          btn.className = 'flex-1 py-3 text-center border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors';
+        }
+      });
+    }
+
+    function resetData() {
+      state.user.points = 2800;
+      state.quests.forEach(q => {
+        q.completed = (q.id === 'q1' || q.id === 'q2');
+      });
+      renderQuests();
+      calculateRanking();
+      showToast('🔄 状態をリセットしました', '初期ポイント：2,800pt');
+    }
+
+    // 初期レンダリング
+    renderQuests();
+    calculateRanking();
+  </script>
+</body>
+</html>
