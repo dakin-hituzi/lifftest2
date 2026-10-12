@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>プラウド新宿スクエア | LINEミニアプリ</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ★追加：LINE LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -30,18 +32,21 @@
       </div>
       <div class="flex items-center space-x-3 text-xs text-slate-400">
         <button onclick="resetData()" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-slate-300">リセット</button>
-        <span class="cursor-pointer">✕</span>
+        <span onclick="closeLiffApp()" class="cursor-pointer">✕</span>
       </div>
     </header>
 
-    <!-- 会員ステータスサマリー -->
+    <!-- 会員ステータスサマリー（LINE名・アイコン表示領域） -->
     <section class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white px-4 py-4 shrink-0 shadow-md">
       <div class="flex justify-between items-start">
-        <div>
-          <span class="inline-block text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 mb-1">Platinum Member</span>
-          <p class="text-sm font-semibold text-slate-200">ゲスト：<span id="user-nickname" class="text-white font-bold">新宿太郎</span> 様</p>
+        <div class="flex items-center space-x-2.5">
+          <img id="user-picture" src="https://placehold.co/80x80/1e293b/cbd5e1?text=LINE" alt="Avatar" class="w-10 h-10 rounded-full border-2 border-amber-400/60 object-cover bg-slate-800 shrink-0">
+          <div>
+            <span class="inline-block text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 mb-0.5">Platinum Member</span>
+            <p class="text-sm font-semibold text-slate-200">ゲスト：<span id="user-nickname" class="text-white font-bold">読み込み中...</span> 様</p>
+          </div>
         </div>
-        <div class="text-right">
+        <div class="text-right shrink-0">
           <p class="text-[10px] text-slate-400">現在ランキング</p>
           <div class="flex items-baseline justify-end space-x-1">
             <span class="text-2xl font-black text-amber-400" id="user-rank">7</span>
@@ -93,10 +98,7 @@
           <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">スタッフ承認制（PIN認証）</span>
         </div>
 
-        <!-- クエストカード群 -->
-        <div id="quest-list" class="space-y-2.5">
-          <!-- JSで動的レンダリング -->
-        </div>
+        <div id="quest-list" class="space-y-2.5"></div>
 
         <div class="mt-4 p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl text-center">
           <p class="text-xs font-medium text-indigo-900">＋ 管理画面からクエストは即時追加可能</p>
@@ -117,9 +119,7 @@
         </div>
 
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mt-2">リアルタイムランキング（匿名）</h2>
-        <div id="ranking-list" class="space-y-1.5">
-          <!-- JSで動的レンダリング -->
-        </div>
+        <div id="ranking-list" class="space-y-1.5"></div>
       </div>
 
       <!-- 3. 上位限定情報タブ -->
@@ -134,7 +134,7 @@
           <div class="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-3.5 rounded-2xl shadow-sm">
             <span class="text-[10px] font-bold tracking-wider uppercase bg-black/20 px-2 py-0.5 rounded">Exclusive Access</span>
             <h3 class="text-sm font-bold mt-1">【未公開】最上階プレミアム住戸 プラン集</h3>
-            <p class="text-[11px] text-amber-100 mt-0.5">現在7位のため、先行閲覧権限が付与されています。</p>
+            <p class="text-[11px] text-amber-100 mt-0.5">現在上位のため、先行閲覧権限が付与されています。</p>
           </div>
 
           <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
@@ -166,11 +166,9 @@
       </button>
     </footer>
 
-    <!-- ==================== PIN入力モーダル ==================== -->
+    <!-- PIN入力モーダル -->
     <div id="pin-modal" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div id="pin-card" class="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl space-y-4 border border-slate-100">
-        
-        <!-- モーダルヘッダー -->
         <div class="flex justify-between items-start">
           <div>
             <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">スタッフ専用承認</span>
@@ -179,13 +177,11 @@
           <button onclick="closePinModal()" class="text-slate-400 hover:text-slate-600 p-1 text-base">✕</button>
         </div>
 
-        <!-- 対象クエスト情報 -->
         <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
           <p class="text-[11px] text-slate-500 font-medium" id="pin-target-title">クエストタイトル</p>
           <p class="text-sm font-black text-amber-600 mt-0.5" id="pin-target-points">+1,500 pt</p>
         </div>
 
-        <!-- 6桁PINインジケーター -->
         <div class="py-2">
           <div id="pin-dots" class="flex justify-center space-x-3">
             <span class="pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150"></span>
@@ -200,7 +196,6 @@
           </p>
         </div>
 
-        <!-- テンキーパッド -->
         <div class="grid grid-cols-3 gap-2 pt-1 pb-2">
           <button onclick="appendPin('1')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">1</button>
           <button onclick="appendPin('2')" class="h-11 bg-slate-50 hover:bg-slate-100 active:bg-indigo-50 active:text-indigo-600 font-bold text-lg text-slate-800 rounded-xl border border-slate-200 transition">2</button>
@@ -234,15 +229,20 @@
   </div>
 
   <script>
+    // ==========================================
+    // ★★★ ここにご自身の LIFF ID を貼り付け ★★★
+    // ==========================================
+    const MY_LIFF_ID = "ここにLIFF_IDを貼り付け"; 
     const CORRECT_PIN = "012877";
-    let enteredPin = "";
-    let pendingAction = null; // { type: 'quest' | 'checkin', questId?: string, points: number, title: string }
 
-    // 初期モックデータ
+    let enteredPin = "";
+    let pendingAction = null;
+
     const state = {
       user: {
-        id: "usr_mock_01",
-        nickname: "新宿太郎",
+        id: "usr_default",
+        nickname: "ゲスト",
+        pictureUrl: "",
         points: 2800,
         rank: 7
       },
@@ -261,7 +261,7 @@
         { name: "パーク派からの乗換", points: 3400 },
         { name: "都庁前勤務", points: 3200 },
         { name: "Ken_Shinjuku", points: 3000 },
-        { name: "新宿太郎 (あなた)", points: 2800, isSelf: true },
+        { name: "あなた", points: 2800, isSelf: true },
         { name: "代々木サクラ", points: 2600 },
         { name: "駅徒歩5分重視", points: 2400 },
         { name: "資産性重視パパ", points: 2200 },
@@ -270,6 +270,53 @@
       ]
     };
 
+    // ================= LIFF 初期化 =================
+    async function initLiff() {
+      if (!MY_LIFF_ID || MY_LIFF_ID.includes("ここにLIFF")) {
+        console.warn("LIFF IDが未設定のため、プレビュー用デモモードで起動中");
+        state.user.nickname = "新宿太郎";
+        document.getElementById('user-nickname').innerText = state.user.nickname;
+        renderQuests();
+        calculateRanking();
+        return;
+      }
+
+      try {
+        await liff.init({ liffId: MY_LIFF_ID });
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          state.user.id = profile.userId;
+          state.user.nickname = profile.displayName;
+          if (profile.pictureUrl) {
+            document.getElementById('user-picture').src = profile.pictureUrl;
+          }
+          document.getElementById('user-nickname').innerText = state.user.nickname;
+          
+          const selfComp = state.competitors.find(c => c.isSelf);
+          if (selfComp) selfComp.name = `${state.user.nickname} (あなた)`;
+        } else {
+          liff.login();
+          return;
+        }
+      } catch (err) {
+        console.error("LIFF初期化エラー:", err);
+        state.user.nickname = "新宿太郎 (ゲスト)";
+        document.getElementById('user-nickname').innerText = state.user.nickname;
+      }
+
+      renderQuests();
+      calculateRanking();
+    }
+
+    function closeLiffApp() {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        alert("ブラウザ版のためウィンドウを閉じられません");
+      }
+    }
+
+    // ================= UI描画 =================
     function renderQuests() {
       const container = document.getElementById('quest-list');
       container.innerHTML = state.quests.map(q => `
@@ -284,9 +331,7 @@
           <div>
             ${q.completed 
               ? `<span class="text-[11px] font-semibold text-slate-400 px-2 py-1 bg-slate-100 rounded-lg">達成済</span>` 
-              : `<button onclick="openPinModalForQuest('${q.id}')" class="text-xs font-bold text-white px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition active:scale-95 flex items-center space-x-1">
-                  <span>達成する</span>
-                </button>`
+              : `<button onclick="openPinModalForQuest('${q.id}')" class="text-xs font-bold text-white px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition active:scale-95">達成する</button>`
             }
           </div>
         </div>
@@ -340,26 +385,16 @@
       }).join('');
     }
 
-    // ================= PIN認証ロジック =================
+    // ================= PIN認証 =================
     function openPinModalForQuest(questId) {
       const q = state.quests.find(item => item.id === questId);
       if (!q || q.completed) return;
-
-      pendingAction = {
-        type: 'quest',
-        questId: q.id,
-        points: q.points,
-        title: q.title
-      };
+      pendingAction = { type: 'quest', questId: q.id, points: q.points, title: q.title };
       showPinModal(q.title, `+${q.points.toLocaleString()} pt`);
     }
 
     function openPinModalForCheckIn() {
-      pendingAction = {
-        type: 'checkin',
-        points: 1000,
-        title: '営業所受付 来場チェックイン'
-      };
+      pendingAction = { type: 'checkin', points: 1000, title: '営業所受付 来場チェックイン' };
       showPinModal('営業所受付 来場チェックイン', '+1,000 pt');
     }
 
@@ -381,10 +416,7 @@
       enteredPin += digit;
       updatePinDots();
       hidePinError();
-
-      if (enteredPin.length === 6) {
-        verifyPin();
-      }
+      if (enteredPin.length === 6) verifyPin();
     }
 
     function backspacePin() {
@@ -404,37 +436,28 @@
     function updatePinDots() {
       const dots = document.querySelectorAll('.pin-dot');
       dots.forEach((dot, idx) => {
-        if (idx < enteredPin.length) {
-          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-indigo-600 bg-indigo-600 scale-110 transition-all duration-150';
-        } else {
-          dot.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150';
-        }
+        dot.className = idx < enteredPin.length
+          ? 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-indigo-600 bg-indigo-600 scale-110 transition-all duration-150'
+          : 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-slate-300 bg-white transition-all duration-150';
       });
     }
 
     function verifyPin() {
       if (enteredPin === CORRECT_PIN) {
-        // 認証成功の演出（緑色点灯）
         const dots = document.querySelectorAll('.pin-dot');
-        dots.forEach(d => {
-          d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-emerald-500 bg-emerald-500 scale-110';
-        });
-
+        dots.forEach(d => d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-emerald-500 bg-emerald-500 scale-110');
         setTimeout(() => {
           executePendingAction();
           closePinModal();
         }, 300);
       } else {
-        // 認証失敗の演出（赤色 + シェイク）
         const dots = document.querySelectorAll('.pin-dot');
-        dots.forEach(d => {
-          d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-red-500 bg-red-500';
-        });
-
+        dots.forEach(d => d.className = 'pin-dot w-3.5 h-3.5 rounded-full border-2 border-red-500 bg-red-500');
         const card = document.getElementById('pin-card');
         card.classList.add('shake-anim');
-        showPinError("PINコードが正しくありません");
-
+        const err = document.getElementById('pin-error-msg');
+        err.innerText = "PINコードが正しくありません";
+        err.classList.remove('opacity-0');
         setTimeout(() => {
           card.classList.remove('shake-anim');
           clearPin();
@@ -442,20 +465,12 @@
       }
     }
 
-    function showPinError(msg) {
-      const err = document.getElementById('pin-error-msg');
-      err.innerText = msg;
-      err.classList.remove('opacity-0');
-    }
-
     function hidePinError() {
-      const err = document.getElementById('pin-error-msg');
-      err.classList.add('opacity-0');
+      document.getElementById('pin-error-msg').classList.add('opacity-0');
     }
 
     function executePendingAction() {
       if (!pendingAction) return;
-
       if (pendingAction.type === 'quest') {
         const q = state.quests.find(item => item.id === pendingAction.questId);
         if (q) {
@@ -467,12 +482,11 @@
         state.user.points += pendingAction.points;
         showToast('🏢 来場認証完了！', `営業所への来場ボーナス (+${pendingAction.points.toLocaleString()} pt)`);
       }
-
       renderQuests();
       calculateRanking();
     }
 
-    // キーボード操作対応 (PCデモ用)
+    // キーボード操作対応 (PC用)
     window.addEventListener('keydown', (e) => {
       const modal = document.getElementById('pin-modal');
       if (modal.classList.contains('hidden')) return;
@@ -502,27 +516,22 @@
       ['quests', 'ranking', 'vip'].forEach(t => {
         document.getElementById(`content-${t}`).classList.toggle('hidden', t !== tab);
         const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          btn.className = 'flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 font-bold transition-colors';
-        } else {
-          btn.className = 'flex-1 py-3 text-center border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors';
-        }
+        btn.className = t === tab
+          ? 'flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 font-bold transition-colors'
+          : 'flex-1 py-3 text-center border-b-2 border-transparent text-slate-500 hover:text-slate-900 transition-colors';
       });
     }
 
     function resetData() {
       state.user.points = 2800;
-      state.quests.forEach(q => {
-        q.completed = (q.id === 'q1' || q.id === 'q2');
-      });
+      state.quests.forEach(q => q.completed = (q.id === 'q1' || q.id === 'q2'));
       renderQuests();
       calculateRanking();
       showToast('🔄 状態をリセットしました', '初期ポイント：2,800pt');
     }
 
-    // 初期レンダリング
-    renderQuests();
-    calculateRanking();
+    // 起動
+    initLiff();
   </script>
 </body>
 </html>
